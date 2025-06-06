@@ -86,13 +86,9 @@ class MainWindow:
             # 第4行：处理按钮
             self.process_button = gr.Button("开始处理视频 (Process Video)", variant="primary")
 
-            with gr.Row():
-                self.plot_component = gr.LinePlot(
+            with gr.Row(height=300):
+                self.plot_component = gr.Plot(
                     label="瞳孔直径变化图 (Pupil Diameter over Time)",
-                    x_label="帧数 (Frame Index)",
-                    y_label="直径 (Diameter)",
-                    show_legend=False,
-                    height=300
                 )
 
             # --- 定义组件的交互行为 ---
@@ -106,7 +102,7 @@ class MainWindow:
 
             self.model_param_selector.change(
                 fn=self.load_model_by_name,
-                inputs=[self.model_param_selector],
+                inputs=[self.model_param_selector,self.resize_dropdown,self.pcutoff_dropdown],
                 outputs=[self.status_textbox]
             )
 
@@ -114,7 +110,7 @@ class MainWindow:
             self.process_button.click(
                 fn=self.gradio_video_processor_wrapper,
                 inputs=[self.video_input_component],
-                outputs=[self.video_output_component]
+                outputs=[self.video_output_component,self.plot_component]
             )
 
     def gradio_video_processor_wrapper(self,video_path):
@@ -124,6 +120,8 @@ class MainWindow:
             return
         video_loader = LocalVideoLoader(video_path)
         model = self.loaded_model_instance
+        frame_indices = []
+        diameters = []
         self.data_recorder_instance = TrackingDataRecorder()
         it = tqdm(range(len(video_loader.frame_list)))
         for i in it:
@@ -134,7 +132,11 @@ class MainWindow:
             if self.display:
                 frame = draw_keypoints(frame, pose)
             self.data_recorder_instance.add_frame_pose(pose)
-            yield frame
+            diameter = estimate_pupil_diameter(pose)  # 你已有的函数
+            diameters.append(diameter)
+            frame_indices.append(i)
+            plot_fig = generate_plotly_lineplot(frame_indices, diameters, window_size=50)
+            yield frame,plot_fig
 
         if os.path.exists("output"):
             os.mkdir("output")
