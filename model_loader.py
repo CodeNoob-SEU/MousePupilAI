@@ -31,7 +31,6 @@ class ModelLoader:
 
         self.live: Optional[DLCLive] = None
         self.is_initialized: bool = False
-
         dlc_constructor_args = {
             "model_path": self.model_path,
             "model_type": self.model_type,
@@ -43,7 +42,8 @@ class ModelLoader:
             "display_cmap": self.marker_cmap,
             **other_dlc_live_kwargs  # Other args like 'precision', 'cropping', 'dynamic', 'convert2rgb'
         }
-
+        print("-"*8+"当前模型参数"+"-"*8)
+        print(dlc_constructor_args)
         self.live = DLCLive(**dlc_constructor_args)
 
     def infer_pose(self, frame: np.ndarray) -> Optional[np.ndarray]:

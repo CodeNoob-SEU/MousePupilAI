@@ -102,7 +102,7 @@ class MainWindow:
 
             self.model_param_selector.change(
                 fn=self.load_model_by_name,
-                inputs=[self.model_param_selector,self.resize_dropdown,self.pcutoff_dropdown],
+                inputs=[self.model_param_selector,self.resize_dropdown, self.pcutoff_dropdown],
                 outputs=[self.status_textbox]
             )
 
@@ -160,7 +160,7 @@ class MainWindow:
         print(f"UI事件：模型列表已更新为 {self.current_model_names}，将默认选中 '{new_value}'")
         return gr.update(choices=self.current_model_names, value=new_value)
 
-    def load_model_by_name(self, model_name_to_load):
+    def load_model_by_name(self, model_name_to_load,resize, pcutoff):
         """
         根据选择的模型名称加载模型。
         这个函数会被 Dropdown 的 change 事件调用。
@@ -175,7 +175,7 @@ class MainWindow:
         model_path = os.path.join("pretrain_model", model_name_to_load)
         if os.path.exists(model_path):
             print(f"开始加载模型: {model_name_to_load}...")
-            self.loaded_model_instance = ModelLoader(model_path)
+            self.loaded_model_instance = ModelLoader(model_path,resize=resize, pcutoff=pcutoff)
             status_message = f"模型 '{model_name_to_load}' 加载成功！"
         else :
             print(f"模型{model_name_to_load}不存在")
