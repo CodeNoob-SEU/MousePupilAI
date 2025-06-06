@@ -1,20 +1,22 @@
 import os
 import time
-
+from datetime import datetime
 import gradio as gr
 from tqdm import tqdm
 
 from model_loader import ModelLoader
 from utils import *
 from video_loader import LocalVideoLoader
-
+from tracking_data_recorder import TrackingDataRecorder
 
 class MainWindow:
     def __init__(self):
         # 参数选择模块
         self.loaded_model_instance : ModelLoader = None
+        self.data_recorder_instance :TrackingDataRecorder= None
+        self.is_tensorrt_available = check_tensorrt_available()
         self.current_model_names = get_pretrain_models()
-        self.display = False
+        self.display = True
 
         with gr.Blocks(title="MouseEyeTracker Demo", theme=gr.themes.Soft()) as self.demo:
             # 第1行：标题
@@ -23,6 +25,31 @@ class MainWindow:
                     gr.Markdown("# MouseEyeTracker 演示程序", latex_delimiters=[]) # 应用主标题
                 with gr.Column(scale=1, min_width=180): # 给按钮固定一些最小宽度
                     self.refresh_models_button = gr.Button("🔄 更新模型列表")
+
+            with gr.Row():
+                with gr.Column(scale=1):
+                    # TensorRT 加速勾选框
+                    self.tensorrt_checkbox = gr.Checkbox(
+                        label="启用 TensorRT 加速",
+                        value=False,  # 默认不选中
+                        interactive=self.is_tensorrt_available
+                    )
+                with gr.Column(scale=1):
+                    # Resize 下拉框
+                    self.resize_dropdown = gr.Dropdown(
+                        label="图像缩放比例 (Resize)",
+                        choices=[0.5, 0.75, 1.0],  # 注意这里用浮点数
+                        value=1.0,  # 默认值为1.0
+                        interactive=True
+                    )
+                with gr.Column(scale=1):
+                    # Pcutoff 下拉框
+                    self.pcutoff_dropdown = gr.Dropdown(
+                        label="置信度阈值 (Pcutoff)",
+                        choices=[0.3,0.4,0.5,0.6],
+                        value=0.5,  # 默认值
+                        interactive=True
+                    )
 
             # 第2行：模型参数选择
             self.model_param_selector = gr.Dropdown(
@@ -59,6 +86,15 @@ class MainWindow:
             # 第4行：处理按钮
             self.process_button = gr.Button("开始处理视频 (Process Video)", variant="primary")
 
+            with gr.Row():
+                self.plot_component = gr.LinePlot(
+                    label="瞳孔直径变化图 (Pupil Diameter over Time)",
+                    x_label="帧数 (Frame Index)",
+                    y_label="直径 (Diameter)",
+                    show_legend=False,
+                    height=300
+                )
+
             # --- 定义组件的交互行为 ---
 
             # 刷新模型列表按钮的行为
@@ -67,6 +103,7 @@ class MainWindow:
                 inputs=None,  # 无需从UI获取输入
                 outputs=[self.model_param_selector]  # 更新模型下拉列表
             )
+
             self.model_param_selector.change(
                 fn=self.load_model_by_name,
                 inputs=[self.model_param_selector],
@@ -84,8 +121,10 @@ class MainWindow:
 
         if self.loaded_model_instance is None:
             self.status_textbox.value = "模型未加载，请加载模型后重试"
+            return
         video_loader = LocalVideoLoader(video_path)
         model = self.loaded_model_instance
+        self.data_recorder_instance = TrackingDataRecorder()
         it = tqdm(range(len(video_loader.frame_list)))
         for i in it:
             frame = video_loader.get_frame()
@@ -94,7 +133,17 @@ class MainWindow:
             pose = model.infer_pose(frame)
             if self.display:
                 frame = draw_keypoints(frame, pose)
+            self.data_recorder_instance.add_frame_pose(pose)
             yield frame
+
+        if os.path.exists("output"):
+            os.mkdir("output")
+        base_name = os.path.basename(video_path)
+        filename_part, extension_part = os.path.splitext(base_name)
+        clean_extension = extension_part.lstrip('.')
+        combined_name = filename_part + clean_extension
+        result_file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{combined_name}.csv"
+        self.data_recorder_instance.save_csv(os.path.join("output", result_file_name))
         return
 
     def handle_refresh_models(self):
