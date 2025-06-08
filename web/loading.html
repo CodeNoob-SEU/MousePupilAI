@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>加载中...</title>
+  <style>
+    body {
+      height: 100vh;
+      margin: 0;
+      background: #f7f7fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+    }
+    .spinner {
+      width: 64px;
+      height: 64px;
+      border: 8px solid #e0e0e0;
+      border-top: 8px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+    .text {
+      color: #333;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+    .log-box {
+      width: 600px;
+      height: 250px;
+      background: #fff;
+      border: 1.5px solid #bbb;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      padding: 16px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      font-family: "Consolas", "Menlo", monospace;
+      font-size: 14px;
+      color: #222;
+    }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
+  <div class="text">后端服务启动中，请稍候...</div>
+  <div id="log" class="log-box"></div>
+  <script>
+    // 需要在 webPreferences 里设置 contextIsolation: false 或用 preload.js 暴露 ipcRenderer
+    const { ipcRenderer } = require('electron');
+    const logDiv = document.getElementById('log');
+    ipcRenderer.on('server-log', (event, msg) => {
+      logDiv.innerText += msg + '\n';
+      logDiv.scrollTop = logDiv.scrollHeight;
+    });
+  </script>
+</body>
+</html>

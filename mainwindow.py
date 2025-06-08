@@ -11,7 +11,9 @@ from tracking_data_recorder import TrackingDataRecorder
 
 class MainWindow:
     def __init__(self):
+        # print("strat loading backend...")
         # 参数选择模块
+        print(get_absolute_path("pretrain_model"))
         self.loaded_model_instance : ModelLoader = None
         self.data_recorder_instance :TrackingDataRecorder= None
         self.is_tensorrt_available = check_tensorrt_available()
@@ -171,8 +173,8 @@ class MainWindow:
             print(status_message)
             return status_message  # 返回状态给 UI
 
-
-        model_path = os.path.join("pretrain_model", model_name_to_load)
+        base_path = get_absolute_path("pretrain_model")
+        model_path = os.path.join(base_path, model_name_to_load)
         if os.path.exists(model_path):
             print(f"开始加载模型: {model_name_to_load}...")
             self.loaded_model_instance = ModelLoader(model_path,resize=resize, pcutoff=pcutoff)
@@ -183,7 +185,7 @@ class MainWindow:
         return status_message
     
     def run(self):
-        self.demo.launch()
+        self.demo.launch(server_name="127.0.0.1", server_port=28989, share=False, inbrowser=False)
 
 
 

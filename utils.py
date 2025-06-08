@@ -1,4 +1,5 @@
 import os
+import sys
 import warnings
 
 import cv2
@@ -14,7 +15,8 @@ def get_pretrain_models():
              如果 'pretrain_model' 目录不存在或其中没有子目录，
              将返回一个只包含空字符串的列表 [""]。
     """
-    model_root_dir = "pretrain_model"
+    model_root_dir = get_absolute_path("pretrain_model")
+    print(model_root_dir)
     model_name = ["请选择模型"]
 
 
@@ -104,7 +106,6 @@ def check_tensorrt_available():
         print("   This might indicate an issue with your TensorRT installation or underlying CUDA/cuDNN setup.")
         return False
 
-import plotly.graph_objects as go
 
 import plotly.graph_objects as go
 
@@ -148,3 +149,11 @@ def generate_plotly_lineplot(frame_indices, diameters, window_size=50):
     )
 
     return fig
+
+def get_absolute_path(path_name):
+    if hasattr(sys, '_MEIPASS'):
+        base_path = os.path.dirname(sys.executable)
+        abs_path = os.path.join(base_path, path_name)
+    else:
+        abs_path = path_name
+    return abs_path
