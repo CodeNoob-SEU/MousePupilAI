@@ -109,11 +109,11 @@ def check_tensorrt_available():
 
 import plotly.graph_objects as go
 
-def generate_plotly_lineplot(frame_indices, diameters, window_size=50):
+def generate_plotly_lineplot(frame_indices, diameters, window_size=50, use_sliding_window=False):
     total_frames = len(frame_indices)
 
-    # 滑动窗口：只保留最近 window_size 个
-    if total_frames > window_size:
+    # 如果启用滑动窗口：只保留最近 window_size 个数据
+    if use_sliding_window and total_frames > window_size:
         frame_indices = frame_indices[-window_size:]
         diameters = diameters[-window_size:]
 
@@ -135,8 +135,11 @@ def generate_plotly_lineplot(frame_indices, diameters, window_size=50):
         fig.update_yaxes(range=[min_y - margin, max_y + margin])
 
     # x 轴范围设定逻辑（防跳动）
-    if total_frames < window_size:
-        fig.update_xaxes(range=[0, window_size - 1])
+    if use_sliding_window:
+        if total_frames < window_size:
+            fig.update_xaxes(range=[0, window_size - 1])
+        else:
+            fig.update_xaxes(range=[frame_indices[0], frame_indices[-1]])
     else:
         fig.update_xaxes(range=[frame_indices[0], frame_indices[-1]])
 

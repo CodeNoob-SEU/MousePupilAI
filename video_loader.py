@@ -56,7 +56,7 @@ class LocalVideoLoader(BasicVideoLoader):
         self.current_frame_idx = 0  # 当前要提供的帧的索引
         self.frame_list = []  # 存储所有加载的帧
         self.metadata_frame_count = 0  # 从视频元数据获取的总帧数
-
+        self.fps = 0
         self.load_video(video_path)
 
     def load_video(self, source: str):
@@ -81,6 +81,7 @@ class LocalVideoLoader(BasicVideoLoader):
         # 重置/清空列表和索引，以支持可能的重载操作
         self.frame_list = []
         self.current_frame_idx = 0
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
 
         print(f"正在加载视频 '{self.video_path}' (元数据总帧数: {self.metadata_frame_count})...")
 
@@ -214,7 +215,7 @@ class CameraVideoLoader(BasicVideoLoader):
 
 if __name__ == '__main__':
     import numpy as np
-    video_path = "13.mp4"
+    video_path = "example.mp4"
     loader = LocalVideoLoader(video_path)
     frame_list = []
     while frame :=loader.get_frame():

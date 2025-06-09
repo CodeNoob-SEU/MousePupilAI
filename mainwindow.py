@@ -30,12 +30,19 @@ class MainWindow:
 
             with gr.Row():
                 with gr.Column(scale=1):
+                    with gr.Row():
                     # TensorRT 加速勾选框
-                    self.tensorrt_checkbox = gr.Checkbox(
-                        label="启用 TensorRT 加速",
-                        value=False,  # 默认不选中
-                        interactive=self.is_tensorrt_available
-                    )
+                        self.tensorrt_checkbox = gr.Checkbox(
+                            label="启用 TensorRT 加速",
+                            value=False,  # 默认不选中
+                            interactive=self.is_tensorrt_available
+                        )
+                    with gr.Row():
+                        self.slidingwindow_checkbox = gr.Checkbox(
+                            label="启用滑动窗口绘图",
+                            value=False,  # 默认不选中
+                            interactive=True
+                        )
                 with gr.Column(scale=1):
                     # Resize 下拉框
                     self.resize_dropdown = gr.Dropdown(
@@ -124,7 +131,7 @@ class MainWindow:
         model = self.loaded_model_instance
         frame_indices = []
         diameters = []
-        self.data_recorder_instance = TrackingDataRecorder()
+        self.data_recorder_instance = TrackingDataRecorder(fps=video_loader.fps)
         it = tqdm(range(len(video_loader.frame_list)))
         for i in it:
             frame = video_loader.get_frame()
@@ -133,6 +140,7 @@ class MainWindow:
             pose = model.infer_pose(frame)
             if self.display:
                 frame = draw_keypoints(frame, pose)
+            self.data_recorder_instance.add_frame(frame)
             self.data_recorder_instance.add_frame_pose(pose)
             diameter = estimate_pupil_diameter(pose)  # 你已有的函数
             diameters.append(diameter)
@@ -140,14 +148,10 @@ class MainWindow:
             plot_fig = generate_plotly_lineplot(frame_indices, diameters, window_size=50)
             yield frame,plot_fig
 
-        if os.path.exists("output"):
-            os.mkdir("output")
         base_name = os.path.basename(video_path)
-        filename_part, extension_part = os.path.splitext(base_name)
-        clean_extension = extension_part.lstrip('.')
-        combined_name = filename_part + clean_extension
-        result_file_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{combined_name}.csv"
-        self.data_recorder_instance.save_csv(os.path.join("output", result_file_name))
+        filename, _ = os.path.splitext(base_name)
+        self.data_recorder_instance.save(filename)
+        self.status_textbox.value = f"{base_name}处理完成"
         return
 
     def handle_refresh_models(self):

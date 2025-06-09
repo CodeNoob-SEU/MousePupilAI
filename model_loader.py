@@ -57,7 +57,7 @@ class ModelLoader:
 
 if __name__ == '__main__':
     from video_loader import LocalVideoLoader
-    videoloader = LocalVideoLoader("13.mp4")
+    videoloader = LocalVideoLoader("example.mp4")
 
     model_path = "pretrain_model/DLC_MiceEyeTracking_resnet_50_iteration-1_shuffle-1"
     model = ModelLoader(model_path, model_type="base")
