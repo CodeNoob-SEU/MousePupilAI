@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 const http = require('http');
 const { ipcMain } = require('electron');
 const { spawn } = require('child_process');
+const os = require('os');
 let serverProcess;
 let mainWindow;
 
@@ -33,16 +34,38 @@ function createWindow() {
     height: 1200,
     webPreferences: {
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      sandbox: false,
     }
   });
   // 先加载本地 loading 页面
   mainWindow.loadFile(path.join(__dirname, 'loading.html'));
   const isDev = !app.isPackaged;
   const root_path = process.resourcesPath;
-  const exePath = isDev
-    ? path.join(__dirname, '..', 'MousePupilAIbackend')
-    : path.join(root_path, "..","..","..",'MousePupilAIbackend');
+
+  // 判断平台（'win32', 'darwin', 'linux'）
+  const platform = os.platform();
+
+  // 构造 backend 路径
+  let backendExecutableName = 'MousePupilAIbackend';
+  if (platform === 'win32') {
+    backendExecutableName += '.exe';
+  }
+  let exePath;
+  if (isDev) {
+    exePath = path.join(__dirname, '..', 'MousePupilAIbackend');
+  } else {
+    if (platform === 'darwin') {
+      // macOS: /MyApp.app/Contents/Resources/
+      exePath = path.join(process.resourcesPath, '..', '..', '..', backendExecutableName);
+    } else if (platform === 'win32') {
+      // Windows: MousePupilAI-win32-x64/resources/
+      exePath = path.join(process.resourcesPath, '..', backendExecutableName);
+    } else {
+      // Linux 或其它平台
+      exePath = path.join(process.resourcesPath, '..', backendExecutableName);
+    }
+  }
   mainWindow.webContents.send('server-log',`[server_path]: ${exePath}`);
   console.log(exePath)
   serverProcess = spawn(exePath, [], {

@@ -173,3 +173,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 /web/node_modules/
+/_internal/
+/web/out/
+/pretrain_model/

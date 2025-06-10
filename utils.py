@@ -94,15 +94,15 @@ def check_tensorrt_available():
     """
     try:
         import tensorrt as trt
-        print(f"🎉 TensorRT found and available! Version: {trt.__version__}")
+        print(f"TensorRT found and available! Version: {trt.__version__}")
         return True
     except ImportError:
-        print("❌ TensorRT module not found. It might not be installed or configured correctly.")
+        print("TensorRT module not found. It might not be installed or configured correctly.")
         print("   Please ensure you have installed the `tensorrt` Python package and its dependencies.")
         return False
     except Exception as e:
         # Catch other potential runtime errors during import (e.g., missing CUDA libraries)
-        print(f"⚠️ An error occurred while trying to import TensorRT: {e}")
+        print(f"An error occurred while trying to import TensorRT: {e}")
         print("   This might indicate an issue with your TensorRT installation or underlying CUDA/cuDNN setup.")
         return False
 

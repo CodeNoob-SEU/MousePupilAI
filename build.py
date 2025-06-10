@@ -12,29 +12,41 @@ def remove_if_exists(path):
 
 def build_backend():
     # 1. 清理残余目录和文件
-    for name in ['build', 'dist', '_internal', 'MousePupilAIbackend']:
+    for name in ['build', 'dist', '_internal', 'MousePupilAIbackend', 'MousePupilAIbackend.exe']:
         remove_if_exists(name)
 
-    # 2. 执行 pyinstaller
-    result = subprocess.run(['pyinstaller', 'mainwindow.spec'])
+    # 2. 执行 pyinstaller 构建
+    result = subprocess.run([sys.executable, '-m', 'PyInstaller', 'mainwindow.spec'])
     if result.returncode != 0:
         print('PyInstaller 构建失败')
-        exit(1)
+        sys.exit(1)
 
-    # 3. 移动 _internal 目录和 MousePupilAImain 可执行文件到项目根目录
-    dist_dir = 'dist/mainwindow'
-    # 先处理 _internal 目录
+    # 3. 处理构建输出
+    dist_dir = os.path.join('dist', 'mainwindow')
+
+    # _internal 目录移动
     src_internal = os.path.join(dist_dir, '_internal')
     if os.path.isdir(src_internal):
         dst_internal = os.path.join(os.getcwd(), '_internal')
         remove_if_exists(dst_internal)
         shutil.move(src_internal, dst_internal)
-    # 再处理 MousePupilAImain 可执行文件
-    src_exec = os.path.join(dist_dir, 'MousePupilAIbackend')
+
+    # 主可执行文件名称判断（Windows 平台加 .exe）
+    exec_name = 'MousePupilAIbackend'
+    if sys.platform.startswith('win'):
+        exec_name += '.exe'
+
+    src_exec = os.path.join(dist_dir, exec_name)
+    dst_exec = os.path.join(os.getcwd(), exec_name)
     if os.path.isfile(src_exec):
-        dst_exec = os.path.join(os.getcwd(), 'MousePupilAIbackend')
         remove_if_exists(dst_exec)
         shutil.move(src_exec, dst_exec)
+    else:
+        print(f"找不到可执行文件: {src_exec}")
+        sys.exit(1)
+
+    print("后端构建完成。")
+
 
 def build_frontend():
     # 1. 定位 web 目录
@@ -102,5 +114,5 @@ def build_frontend():
     print(f"✅ 构建完成：{os.path.basename(target_path)} 已移动到项目根目录。")
 
 if __name__ == '__main__':
-    # build_backend()
-    build_frontend()
+    build_backend()
+    # build_frontend()
